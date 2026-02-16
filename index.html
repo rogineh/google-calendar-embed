@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사순절릴레이금식기도 | Feb 18 - Apr 4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="light-mode">
+    <div class="app-container">
+        <header>
+            <h1>사순절릴레이금식기도</h1>
+            <p class="subtitle">2026.02.18 - 2026.04.04</p>
+        </header>
+
+        <div id="calendar-grid" class="calendar-grid">
+            <!-- Days and events will be injected here -->
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Fetching events...</p>
+            </div>
+        </div>
+
+        <footer id="config-panel">
+            <div class="status-indicator">
+                <span id="update-timer">Last updated: Just now</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal for Event Details -->
+    <div id="event-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title"></h2>
+            <p id="modal-time" class="modal-time"></p>
+            <div id="modal-desc" class="modal-description"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

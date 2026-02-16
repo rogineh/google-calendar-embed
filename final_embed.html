@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Calendar | Feb 18 - Apr 4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent-color: #f6b23b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        h1,
+        h2,
+        .subtitle {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .day-cell {
+            aspect-ratio: 1 / 1;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .day-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--accent-color);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+
+        .day-name {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .day-number {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .day-cell.today {
+            background: #eff6ff;
+            border-color: var(--accent-color);
+        }
+
+        .day-cell.today .day-number {
+            color: var(--accent-color);
+        }
+
+        .events-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .event-item {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #fff7ed;
+            color: #9a3412;
+            border-left: 2px solid #f97316;
+            display: flex;
+            gap: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .event-item:hover {
+            filter: brightness(0.95);
+            transform: scale(1.02);
+        }
+
+        .event-time {
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .event-summary {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Modal Styling */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            animation: modalSlide 0.3s ease-out;
+        }
+
+        @keyframes modalSlide {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-time {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .modal-description {
+            margin-top: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .loader {
+            grid-column: span 7;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        footer {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body class="light-mode">
+    <div class="app-container">
+
+        <div id="calendar-grid" class="calendar-grid">
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Connecting to Google Calendar...</p>
+            </div>
+        </div>
+
+        <footer>
+            <div class="status-indicator">
+                <span id="update-timer">Initializing...</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal for Event Details -->
+    <div id="event-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title"></h2>
+            <p id="modal-time" class="modal-time"></p>
+            <div id="modal-desc" class="modal-description"></div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            apiKey: 'AIzaSyCzn7qHU1jhLErImblzuB4Ufub8FJBljCM',
+            calendarId: '5c0d965e5bb8cfbf96647f5a08b4cea6c48be19d40dd005496ae8865ba8a04cc@group.calendar.google.com',
+            startDate: '2026-02-18',
+            endDate: '2026-04-04',
+            pollInterval: 5 * 60 * 1000
+        };
+
+        const calendarGrid = document.getElementById('calendar-grid');
+        const lastUpdatedText = document.getElementById('update-timer');
+        const modal = document.getElementById('event-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalTime = document.getElementById('modal-time');
+        const modalDesc = document.getElementById('modal-desc');
+
+        function generateCalendar() {
+            const start = new Date(CONFIG.startDate);
+            const startDate = new Date(start);
+            startDate.setDate(start.getDate() - start.getDay());
+
+            calendarGrid.innerHTML = '';
+
+            for (let i = 0; i < 49; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+
+                const dateStr = currentDate.toISOString().split('T')[0];
+
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                if (dateStr === new Date().toISOString().split('T')[0]) {
+                    cell.classList.add('today');
+                }
+
+                cell.innerHTML = `
+                    <div class="day-header">
+                        <span class="day-name">${currentDate.toLocaleString('default', { weekday: 'short' })}</span>
+                        <span class="day-number">${currentDate.getDate()} ${currentDate.toLocaleString('default', { month: 'short' })}</span>
+                    </div>
+                    <div class="events-list" id="events-${dateStr}"></div>
+                `;
+
+                calendarGrid.appendChild(cell);
+            }
+        }
+
+        async function fetchEvents() {
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CONFIG.calendarId)}/events?key=${CONFIG.apiKey}&timeMin=${new Date(CONFIG.startDate).toISOString()}&timeMax=${new Date(CONFIG.endDate).toISOString()}&singleEvents=true&orderBy=startTime`
+                );
+
+                if (!response.ok) throw new Error('API Error');
+
+                const data = await response.json();
+                const events = data.items.map(item => {
+                    const startDateTime = item.start.dateTime || item.start.date;
+                    let startTime = '';
+
+                    if (item.start.dateTime) {
+                        const date = new Date(item.start.dateTime);
+                        startTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    }
+
+                    return {
+                        start: startDateTime.split('T')[0],
+                        time: startTime,
+                        summary: item.summary,
+                        description: item.description || 'No description provided.'
+                    };
+                });
+
+                renderEvents(events);
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                lastUpdatedText.textContent = 'Connection Error - Check API Key & Calendar Visibility';
+            }
+        }
+
+        function renderEvents(events) {
+            const lists = document.querySelectorAll('.events-list');
+            lists.forEach(l => l.innerHTML = '');
+
+            events.forEach(event => {
+                const listContainer = document.getElementById(`events-${event.start}`);
+                if (listContainer) {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = 'event-item';
+                    eventEl.innerHTML = `
+                        ${event.time ? `<span class="event-time">${event.time}</span>` : ''}
+                        <span class="event-summary">${event.summary}</span>
+                    `;
+                    eventEl.onclick = () => showModal(event.summary, event.time, event.description);
+                    listContainer.appendChild(eventEl);
+                }
+            });
+
+            const now = new Date();
+            lastUpdatedText.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+        }
+
+        function showModal(title, time, desc) {
+            modalTitle.textContent = title;
+            modalTime.textContent = time ? `Time: ${time}` : 'All Day';
+            modalDesc.textContent = desc;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                closeModal();
+            }
+        };
+
+        generateCalendar();
+        fetchEvents();
+        setInterval(fetchEvents, CONFIG.pollInterval);
+    </script>
+</body>
+
+</html>
