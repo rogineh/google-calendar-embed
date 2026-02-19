@@ -10,13 +10,19 @@ const CONFIG = {
 const calendarGrid = document.getElementById('calendar-grid');
 const lastUpdatedText = document.getElementById('update-timer');
 
+let eventsByDate = {}; // Store events grouped by date
+
 // Mock Data for Initial UI check
 const MOCK_EVENTS = [
-    { start: '2026-02-18', summary: 'Kickoff Meeting' },
-    { start: '2026-02-25', summary: 'Design Review' },
-    { start: '2026-03-05', summary: 'Development Phase' },
-    { start: '2026-03-20', summary: 'QA Testing' },
-    { start: '2026-04-01', summary: 'Final Release' }
+    { start: '2026-02-18', summary: 'Kickoff Meeting', description: 'Initial kickoff for the Lenten relay prayer.' },
+    { start: '2026-02-19', summary: 'Morning Prayer', time: '06:00', description: 'Daily morning prayer session.' },
+    { start: '2026-02-19', summary: 'Team Sync', time: '09:00', description: 'Weekly status update.' },
+    { start: '2026-02-19', summary: 'Evening Service', time: '19:00', description: 'Grace service.' },
+    { start: '2026-02-19', summary: 'Late Night Prayer', time: '22:00', description: 'Individual prayer.' },
+    { start: '2026-02-25', summary: 'Design Review', description: 'Reviewing calendar interface.' },
+    { start: '2026-03-05', summary: 'Development Phase', description: 'Coding the new features.' },
+    { start: '2026-03-20', summary: 'QA Testing', description: 'Testing responsiveness.' },
+    { start: '2026-04-01', summary: 'Final Release', description: 'Go live!' }
 ];
 
 function generateCalendar() {
@@ -41,6 +47,14 @@ function generateCalendar() {
         if (dateStr === new Date().toISOString().split('T')[0]) {
             cell.classList.add('today');
         }
+
+        // Add click handler to the entire cell
+        cell.onclick = (e) => {
+            // Only trigger if we didn't click an individual event directly
+            if (!e.target.closest('.event-item')) {
+                showDayModal(dateStr);
+            }
+        };
 
         cell.innerHTML = `
                     <div class="day-header">
@@ -92,22 +106,54 @@ async function fetchEvents() {
 }
 
 function renderEvents(events) {
-    // Clear previous events from lists
+    // Clear previous events from map
+    eventsByDate = {};
+
+    // Clear previous events from UI
     const lists = document.querySelectorAll('.events-list');
     lists.forEach(l => l.innerHTML = '');
 
+    // Group events and render them
     events.forEach(event => {
-        const listContainer = document.getElementById(`events-${event.start}`);
+        if (!eventsByDate[event.start]) {
+            eventsByDate[event.start] = [];
+        }
+        eventsByDate[event.start].push(event);
+    });
+
+    Object.keys(eventsByDate).forEach(date => {
+        const listContainer = document.getElementById(`events-${date}`);
         if (listContainer) {
-            const eventEl = document.createElement('div');
-            eventEl.className = 'event-item';
-            eventEl.style.cursor = 'pointer';
-            eventEl.innerHTML = `
-                ${event.time ? `<span class="event-time">${event.time}</span>` : ''}
-                <span class="event-summary">${event.summary}</span>
-            `;
-            eventEl.onclick = () => showModal(event.summary, event.time, event.description);
-            listContainer.appendChild(eventEl);
+            const dayEvents = eventsByDate[date];
+
+            // Determine limit based on screen width (matching CSS breakpoints)
+            const isMobile = window.innerWidth <= 640;
+            const isTablet = window.innerWidth <= 1024 && window.innerWidth > 640;
+            const limit = isMobile ? 2 : (isTablet ? 3 : 4);
+
+            dayEvents.slice(0, limit).forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'event-item';
+                eventEl.style.cursor = 'pointer';
+                eventEl.innerHTML = `
+                    ${event.time ? `<span class="event-time">${event.time}</span>` : ''}
+                    <span class="event-summary">${event.summary}</span>
+                `;
+                eventEl.onclick = (e) => {
+                    e.stopPropagation();
+                    showModal(event.summary, event.time, event.description);
+                };
+                listContainer.appendChild(eventEl);
+            });
+
+            if (dayEvents.length > limit) {
+                const moreEl = document.createElement('div');
+                moreEl.className = 'more-indicator';
+                moreEl.textContent = `+${dayEvents.length - limit} more`;
+                // Add indicator that it's clickable
+                moreEl.style.cursor = 'pointer';
+                listContainer.appendChild(moreEl);
+            }
         }
     });
 
@@ -123,7 +169,36 @@ const modalDesc = document.getElementById('modal-desc');
 function showModal(title, time, desc) {
     modalTitle.textContent = title;
     modalTime.textContent = time ? `Time: ${time}` : 'All Day';
-    modalDesc.textContent = desc;
+    modalDesc.innerHTML = `<div class="modal-description-content">${desc}</div>`;
+    modal.classList.add('active');
+}
+
+function showDayModal(dateStr) {
+    const dayEvents = eventsByDate[dateStr] || [];
+    const date = new Date(dateStr);
+    const formattedDate = date.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    modalTitle.textContent = `Events for ${formattedDate}`;
+    modalTime.textContent = dayEvents.length > 0 ? `${dayEvents.length} event(s)` : 'No events scheduled';
+
+    if (dayEvents.length > 0) {
+        let eventsHtml = '<div class="day-events-modal-list">';
+        dayEvents.forEach(event => {
+            eventsHtml += `
+                <div class="day-event-modal-item" onclick="showModal('${event.summary.replace(/'/g, "\\'")}', '${event.time}', '${event.description.replace(/'/g, "\\'").replace(/\n/g, "<br>")}')">
+                    <div class="day-event-modal-header">
+                        ${event.time ? `<span class="event-time">${event.time}</span>` : '<span class="event-time">All Day</span>'}
+                        <span class="event-summary">${event.summary}</span>
+                    </div>
+                </div>
+            `;
+        });
+        eventsHtml += '</div>';
+        modalDesc.innerHTML = eventsHtml;
+    } else {
+        modalDesc.innerHTML = '<p>No events found for this day.</p>';
+    }
+
     modal.classList.add('active');
 }
 
@@ -136,6 +211,17 @@ window.onclick = (event) => {
     if (event.target == modal) {
         closeModal();
     }
+};
+
+// Handle window resize to re-render events with correct limits
+let resizeTimer;
+window.onresize = () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        // Re-rendering events based on new screen size
+        const allEvents = Object.values(eventsByDate).flat();
+        renderEvents(allEvents);
+    }, 250);
 };
 
 // Initialization

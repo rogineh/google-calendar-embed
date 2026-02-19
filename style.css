@@ -75,12 +75,14 @@ header h1 {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .day-cell:hover {
     transform: translateY(-4px);
     box-shadow: var(--hover-shadow);
     border-color: var(--accent-color);
+    background: #fffcf5;
 }
 
 .day-header {
@@ -88,6 +90,8 @@ header h1 {
     justify-content: space-between;
     align-items: baseline;
     margin-bottom: 8px;
+    pointer-events: none;
+    /* Let clicks pass through to the cell */
 }
 
 .day-name {
@@ -115,7 +119,8 @@ header h1 {
 
 .events-list {
     flex-grow: 1;
-    overflow-y: auto;
+    overflow: hidden;
+    /* Changed from overflow-y: auto to prevent scrollbars in cells */
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -131,6 +136,20 @@ header h1 {
     display: flex;
     gap: 4px;
     overflow: hidden;
+    position: relative;
+    z-index: 2;
+    /* Ensure individual events are clickable above the cell */
+}
+
+.more-indicator {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    padding: 2px 4px;
+    text-align: center;
+    background: #fffbeb;
+    border-radius: 4px;
+    margin-top: auto;
 }
 
 .event-time {
@@ -150,7 +169,7 @@ header h1 {
     transition: transform 0.2s ease;
 }
 
-/* Modal Styling */
+/* Modal Styling Improvements */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -163,6 +182,7 @@ header h1 {
     backdrop-filter: blur(4px);
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 .modal-overlay.active {
@@ -172,12 +192,66 @@ header h1 {
 .modal-content {
     background-color: white;
     padding: 2rem;
-    border-radius: 20px;
-    width: 90%;
-    max-width: 500px;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     position: relative;
     animation: modalSlide 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-description {
+    margin-top: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Day Events List in Modal */
+.day-events-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.day-event-modal-item {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.day-event-modal-item:hover {
+    border-color: var(--accent-color);
+    background: #fffbeb;
+    transform: translateX(4px);
+}
+
+.day-event-modal-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.day-event-modal-header .event-time {
+    color: var(--accent-color);
+    background: #fff7ed;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.day-event-modal-header .event-summary {
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: normal;
 }
 
 @keyframes modalSlide {
@@ -207,15 +281,13 @@ header h1 {
 }
 
 .modal-time {
-    color: var(--accent-color);
-    font-weight: 600;
-    margin: 10px 0;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin: 5px 0 15px 0;
+    font-size: 1rem;
 }
 
-.modal-description {
-    margin-top: 15px;
-    color: var(--text-secondary);
-    line-height: 1.6;
+.modal-description-content {
     white-space: pre-wrap;
 }
 
@@ -258,11 +330,23 @@ footer {
 @media (max-width: 1024px) {
     .calendar-grid {
         grid-template-columns: repeat(4, 1fr);
+        padding: 15px;
+        gap: 10px;
     }
 }
 
 @media (max-width: 640px) {
     .calendar-grid {
         grid-template-columns: repeat(2, 1fr);
+        padding: 10px;
+        gap: 8px;
+    }
+
+    body {
+        padding: 1rem;
+    }
+
+    header h1 {
+        font-size: 1.8rem;
     }
 }

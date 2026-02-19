@@ -87,12 +87,14 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            cursor: pointer;
         }
 
         .day-cell:hover {
             transform: translateY(-2px);
             box-shadow: var(--hover-shadow);
             border-color: var(--accent-color);
+            background: #fffcf5;
         }
 
         .day-header {
@@ -100,6 +102,7 @@
             justify-content: space-between;
             align-items: baseline;
             margin-bottom: 6px;
+            pointer-events: none;
         }
 
         .day-name {
@@ -126,7 +129,7 @@
 
         .events-list {
             flex-grow: 1;
-            overflow-y: auto;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             gap: 3px;
@@ -144,11 +147,24 @@
             overflow: hidden;
             cursor: pointer;
             transition: transform 0.2s ease, filter 0.2s ease;
+            position: relative;
+            z-index: 2;
         }
 
         .event-item:hover {
             filter: brightness(0.95);
             transform: scale(1.02);
+        }
+
+        .more-indicator {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            padding: 2px 4px;
+            text-align: center;
+            background: #fffbeb;
+            border-radius: 4px;
+            margin-top: auto;
         }
 
         .event-time {
@@ -175,6 +191,7 @@
             backdrop-filter: blur(4px);
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
 
         .modal-overlay.active {
@@ -185,11 +202,64 @@
             background-color: white;
             padding: 2rem;
             border-radius: 20px;
-            width: 90%;
+            width: 100%;
             max-width: 500px;
+            max-height: 90vh;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             position: relative;
             animation: modalSlide 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-description {
+            margin-top: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .day-events-modal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .day-event-modal-item {
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .day-event-modal-item:hover {
+            border-color: var(--accent-color);
+            background: #fffbeb;
+            transform: translateX(4px);
+        }
+
+        .day-event-modal-header {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .day-event-modal-header .event-time {
+            color: var(--accent-color);
+            background: #fff7ed;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .day-event-modal-header .event-summary {
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: normal;
         }
 
         @keyframes modalSlide {
@@ -219,15 +289,13 @@
         }
 
         .modal-time {
-            color: var(--accent-color);
-            font-weight: 600;
-            margin: 10px 0;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin: 5px 0 15px 0;
+            font-size: 0.9rem;
         }
 
-        .modal-description {
-            margin-top: 15px;
-            color: var(--text-secondary);
-            line-height: 1.6;
+        .modal-description-content {
             white-space: pre-wrap;
         }
 
@@ -265,9 +333,21 @@
             font-size: 0.75rem;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .calendar-grid {
                 grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .calendar-grid {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 10px;
+                gap: 6px;
+            }
+
+            header h1 {
+                font-size: 1.6rem;
             }
         }
     </style>
@@ -316,6 +396,8 @@
         const modalTime = document.getElementById('modal-time');
         const modalDesc = document.getElementById('modal-desc');
 
+        let eventsByDate = {}; // Store events grouped by date
+
         function generateCalendar() {
             const start = new Date(CONFIG.startDate);
             const startDate = new Date(start);
@@ -334,6 +416,12 @@
                 if (dateStr === new Date().toISOString().split('T')[0]) {
                     cell.classList.add('today');
                 }
+
+                cell.onclick = (e) => {
+                    if (!e.target.closest('.event-item')) {
+                        showDayModal(dateStr);
+                    }
+                };
 
                 cell.innerHTML = `
                     <div class="day-header">
@@ -381,20 +469,45 @@
         }
 
         function renderEvents(events) {
+            eventsByDate = {};
             const lists = document.querySelectorAll('.events-list');
             lists.forEach(l => l.innerHTML = '');
 
             events.forEach(event => {
-                const listContainer = document.getElementById(`events-${event.start}`);
+                if (!eventsByDate[event.start]) {
+                    eventsByDate[event.start] = [];
+                }
+                eventsByDate[event.start].push(event);
+            });
+
+            Object.keys(eventsByDate).forEach(date => {
+                const listContainer = document.getElementById(`events-${date}`);
                 if (listContainer) {
-                    const eventEl = document.createElement('div');
-                    eventEl.className = 'event-item';
-                    eventEl.innerHTML = `
-                        ${event.time ? `<span class="event-time">${event.time}</span>` : ''}
-                        <span class="event-summary">${event.summary}</span>
-                    `;
-                    eventEl.onclick = () => showModal(event.summary, event.time, event.description);
-                    listContainer.appendChild(eventEl);
+                    const dayEvents = eventsByDate[date];
+                    const isMobile = window.innerWidth <= 640;
+                    const isTablet = window.innerWidth <= 1024 && window.innerWidth > 640;
+                    const limit = isMobile ? 2 : (isTablet ? 3 : 4);
+
+                    dayEvents.slice(0, limit).forEach(event => {
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'event-item';
+                        eventEl.innerHTML = `
+                            ${event.time ? `<span class="event-time">${event.time}</span>` : ''}
+                            <span class="event-summary">${event.summary}</span>
+                        `;
+                        eventEl.onclick = (e) => {
+                            e.stopPropagation();
+                            showModal(event.summary, event.time, event.description);
+                        };
+                        listContainer.appendChild(eventEl);
+                    });
+
+                    if (dayEvents.length > limit) {
+                        const moreEl = document.createElement('div');
+                        moreEl.className = 'more-indicator';
+                        moreEl.textContent = `+${dayEvents.length - limit} more`;
+                        listContainer.appendChild(moreEl);
+                    }
                 }
             });
 
@@ -405,7 +518,36 @@
         function showModal(title, time, desc) {
             modalTitle.textContent = title;
             modalTime.textContent = time ? `Time: ${time}` : 'All Day';
-            modalDesc.textContent = desc;
+            modalDesc.innerHTML = `<div class="modal-description-content">${desc}</div>`;
+            modal.classList.add('active');
+        }
+
+        function showDayModal(dateStr) {
+            const dayEvents = eventsByDate[dateStr] || [];
+            const date = new Date(dateStr);
+            const formattedDate = date.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            modalTitle.textContent = `Events for ${formattedDate}`;
+            modalTime.textContent = dayEvents.length > 0 ? `${dayEvents.length} event(s)` : 'No events scheduled';
+
+            if (dayEvents.length > 0) {
+                let eventsHtml = '<div class="day-events-modal-list">';
+                dayEvents.forEach(event => {
+                    eventsHtml += `
+                        <div class="day-event-modal-item" onclick="showModal('${event.summary.replace(/'/g, "\\'")}', '${event.time}', '${event.description.replace(/'/g, "\\'").replace(/\n/g, "<br>")}')">
+                            <div class="day-event-modal-header">
+                                ${event.time ? `<span class="event-time">${event.time}</span>` : '<span class="event-time">All Day</span>'}
+                                <span class="event-summary">${event.summary}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                eventsHtml += '</div>';
+                modalDesc.innerHTML = eventsHtml;
+            } else {
+                modalDesc.innerHTML = '<p>No events found for this day.</p>';
+            }
+
             modal.classList.add('active');
         }
 
@@ -419,10 +561,20 @@
             }
         };
 
+        let resizeTimer;
+        window.onresize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const allEvents = Object.values(eventsByDate).flat();
+                renderEvents(allEvents);
+            }, 250);
+        };
+
         generateCalendar();
         fetchEvents();
         setInterval(fetchEvents, CONFIG.pollInterval);
     </script>
+</body>
 </body>
 
 </html>
