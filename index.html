@@ -35,13 +35,23 @@
         </footer>
     </div>
 
+    <!-- Modal for Day Events List -->
+    <div id="day-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeDayModal()">&times;</span>
+            <h2 id="day-modal-title"></h2>
+            <p id="day-modal-time" class="modal-time"></p>
+            <div id="day-modal-desc" class="modal-description"></div>
+        </div>
+    </div>
+
     <!-- Modal for Event Details -->
     <div id="event-modal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modal-title"></h2>
-            <p id="modal-time" class="modal-time"></p>
-            <div id="modal-desc" class="modal-description"></div>
+            <h2 id="event-title"></h2>
+            <p id="event-time" class="modal-time"></p>
+            <div id="event-desc" class="modal-description"></div>
         </div>
     </div>
 

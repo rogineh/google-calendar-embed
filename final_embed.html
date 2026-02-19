@@ -370,13 +370,23 @@
         </footer>
     </div>
 
+    <!-- Modal for Day Events List -->
+    <div id="day-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeDayModal()">&times;</span>
+            <h2 id="day-modal-title"></h2>
+            <p id="day-modal-time" class="modal-time"></p>
+            <div id="day-modal-desc" class="modal-description"></div>
+        </div>
+    </div>
+
     <!-- Modal for Event Details -->
     <div id="event-modal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modal-title"></h2>
-            <p id="modal-time" class="modal-time"></p>
-            <div id="modal-desc" class="modal-description"></div>
+            <h2 id="event-title"></h2>
+            <p id="event-time" class="modal-time"></p>
+            <div id="event-desc" class="modal-description"></div>
         </div>
     </div>
 
@@ -391,10 +401,16 @@
 
         const calendarGrid = document.getElementById('calendar-grid');
         const lastUpdatedText = document.getElementById('update-timer');
-        const modal = document.getElementById('event-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalTime = document.getElementById('modal-time');
-        const modalDesc = document.getElementById('modal-desc');
+
+        const eventModal = document.getElementById('event-modal');
+        const eventTitle = document.getElementById('event-title');
+        const eventTime = document.getElementById('event-time');
+        const eventDesc = document.getElementById('event-desc');
+
+        const dayModal = document.getElementById('day-modal');
+        const dayModalTitle = document.getElementById('day-modal-title');
+        const dayModalTime = document.getElementById('day-modal-time');
+        const dayModalDesc = document.getElementById('day-modal-desc');
 
         let eventsByDate = {}; // Store events grouped by date
 
@@ -516,10 +532,10 @@
         }
 
         function showModal(title, time, desc) {
-            modalTitle.textContent = title;
-            modalTime.textContent = time ? `Time: ${time}` : 'All Day';
-            modalDesc.innerHTML = `<div class="modal-description-content">${desc}</div>`;
-            modal.classList.add('active');
+            eventTitle.textContent = title;
+            eventTime.textContent = time ? `Time: ${time}` : 'All Day';
+            eventDesc.innerHTML = `<div class="modal-description-content">${desc}</div>`;
+            eventModal.classList.add('active');
         }
 
         function showDayModal(dateStr) {
@@ -527,8 +543,8 @@
             const date = new Date(dateStr);
             const formattedDate = date.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-            modalTitle.textContent = `Events for ${formattedDate}`;
-            modalTime.textContent = dayEvents.length > 0 ? `${dayEvents.length} event(s)` : 'No events scheduled';
+            dayModalTitle.textContent = `Events for ${formattedDate}`;
+            dayModalTime.textContent = dayEvents.length > 0 ? `${dayEvents.length} event(s)` : 'No events scheduled';
 
             if (dayEvents.length > 0) {
                 let eventsHtml = '<div class="day-events-modal-list">';
@@ -543,21 +559,27 @@
                     `;
                 });
                 eventsHtml += '</div>';
-                modalDesc.innerHTML = eventsHtml;
+                dayModalDesc.innerHTML = eventsHtml;
             } else {
-                modalDesc.innerHTML = '<p>No events found for this day.</p>';
+                dayModalDesc.innerHTML = '<p>No events found for this day.</p>';
             }
 
-            modal.classList.add('active');
+            dayModal.classList.add('active');
         }
 
         function closeModal() {
-            modal.classList.remove('active');
+            eventModal.classList.remove('active');
+        }
+
+        function closeDayModal() {
+            dayModal.classList.remove('active');
         }
 
         window.onclick = (event) => {
-            if (event.target == modal) {
+            if (event.target == eventModal) {
                 closeModal();
+            } else if (event.target == dayModal) {
+                closeDayModal();
             }
         };
 

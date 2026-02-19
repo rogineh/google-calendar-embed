@@ -161,16 +161,21 @@ function renderEvents(events) {
     lastUpdatedText.textContent = `Last updated: ${now.toLocaleTimeString()}`;
 }
 
-const modal = document.getElementById('event-modal');
-const modalTitle = document.getElementById('modal-title');
-const modalTime = document.getElementById('modal-time');
-const modalDesc = document.getElementById('modal-desc');
+const eventModal = document.getElementById('event-modal');
+const eventTitle = document.getElementById('event-title');
+const eventTime = document.getElementById('event-time');
+const eventDesc = document.getElementById('event-desc');
+
+const dayModal = document.getElementById('day-modal');
+const dayModalTitle = document.getElementById('day-modal-title');
+const dayModalTime = document.getElementById('day-modal-time');
+const dayModalDesc = document.getElementById('day-modal-desc');
 
 function showModal(title, time, desc) {
-    modalTitle.textContent = title;
-    modalTime.textContent = time ? `Time: ${time}` : 'All Day';
-    modalDesc.innerHTML = `<div class="modal-description-content">${desc}</div>`;
-    modal.classList.add('active');
+    eventTitle.textContent = title;
+    eventTime.textContent = time ? `Time: ${time}` : 'All Day';
+    eventDesc.innerHTML = `<div class="modal-description-content">${desc}</div>`;
+    eventModal.classList.add('active');
 }
 
 function showDayModal(dateStr) {
@@ -178,8 +183,8 @@ function showDayModal(dateStr) {
     const date = new Date(dateStr);
     const formattedDate = date.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    modalTitle.textContent = `Events for ${formattedDate}`;
-    modalTime.textContent = dayEvents.length > 0 ? `${dayEvents.length} event(s)` : 'No events scheduled';
+    dayModalTitle.textContent = `Events for ${formattedDate}`;
+    dayModalTime.textContent = dayEvents.length > 0 ? `${dayEvents.length} event(s)` : 'No events scheduled';
 
     if (dayEvents.length > 0) {
         let eventsHtml = '<div class="day-events-modal-list">';
@@ -194,22 +199,28 @@ function showDayModal(dateStr) {
             `;
         });
         eventsHtml += '</div>';
-        modalDesc.innerHTML = eventsHtml;
+        dayModalDesc.innerHTML = eventsHtml;
     } else {
-        modalDesc.innerHTML = '<p>No events found for this day.</p>';
+        dayModalDesc.innerHTML = '<p>No events found for this day.</p>';
     }
 
-    modal.classList.add('active');
+    dayModal.classList.add('active');
 }
 
 function closeModal() {
-    modal.classList.remove('active');
+    eventModal.classList.remove('active');
 }
 
-// Close modal on outside click
+function closeDayModal() {
+    dayModal.classList.remove('active');
+}
+
+// Close modals on outside click
 window.onclick = (event) => {
-    if (event.target == modal) {
+    if (event.target == eventModal) {
         closeModal();
+    } else if (event.target == dayModal) {
+        closeDayModal();
     }
 };
 
